@@ -23,16 +23,29 @@ class Body:
         self.mass = mass
         self.radius = radius
         self.color = color
+        self.path = deque(maxlen=1000)
+        self.step_counter = 0
 
     def draw(self, surface,zoom,offset):
+        if len(self.path) > 2:
+            points = []
+            for p in self.path:
+                x = (p.x * scale * zoom) + (surface.get_width() // 2) + offset.x
+                y = (p.y * scale * zoom) + (surface.get_height() // 2) + offset.y
+                points.append((x, y))
+            pyg.draw.aalines(surface, self.color, False, points)
         screen_x = self.pos.x * scale *zoom+ (surface.get_width() // 2) + offset.x
         screen_y = self.pos.y * scale * zoom+ (surface.get_height() // 2) + offset.y
-
         display_radius = max(1, int(self.radius * zoom))
         pyg.draw.circle(surface, self.color, (int(screen_x), int(screen_y)), display_radius)
 
     def update(self, dt):
         self.pos += self.vel * dt
+
+        self.step_counter += 1
+        if self.step_counter >= 10:
+            self.path.append(pyg.Vector2(self.pos))
+            self.step_counter = 0
 
     def distance(self , body: Body):
         diff = self.pos - body.pos
@@ -51,7 +64,7 @@ earth = Body((150_000_000_000, 0), 5.97e24, 8, (0, 30_000), (100, 150, 255))
 mercury = Body((57_900_000_000,0),3.30e23,3,(0,47_400),(169, 169, 169))
 venus = Body((108_000_000_000,0),4.87e24,8,(0,35_000),(255, 198, 73))
 mars = Body((228_000_000_000,0),6.39e23,6,(0,24_070),(226, 123, 88))
-jupiter = Body((778_000_000_000,0),6.39e23,18,(0,13_070),(196, 156, 126))
+jupiter = Body((778_000_000_000,0),1.898e27,18,(0,13_070),(196, 156, 126))
 
 bodies = [sun, mercury,venus,earth,mars,jupiter]
 running = True
@@ -101,7 +114,7 @@ while running:
     for b in bodies:
         b.draw(screen,zoom,offset)
 
-    pyg.display.flip()  # Ενημέρωση της οθόνης
-    clock.tick(60)  # Κλείδωμα στα 60 FPS για σταθερή φυσική
+    pyg.display.flip()
+    clock.tick(60)
 
 pyg.quit()
